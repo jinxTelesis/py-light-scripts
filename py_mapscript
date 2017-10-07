@@ -1,0 +1,96 @@
+import arcpy, sys, traceback, datetime, os
+from arcpy.mapping import *
+''' cant have a selection or script screws up '''
+''' recode to deselect cursor ''' 
+
+x = int(0)
+
+count = int(0)
+
+
+default = 'I:\\Project\\FloodBuyout2012\\PhaseIV\\' # need python escape characters
+datapath = default
+arcpy.env.workspace = default
+
+mxd = MapDocument(default + 'flood_template.mxd') # need python escape characters (template title name)
+xwidth = 12
+TOCLayers = ListLayers(mxd)
+dataframe = ListDataFrames(mxd, "Layers") [0]
+tElements = ListLayoutElements(mxd, "TEXT_ELEMENT")
+
+counter = 1
+
+IDvar = ''
+Labelvar = ''
+Panelvar = ''
+
+
+
+
+for TOCLayer in TOCLayers:
+    if TOCLayer.longName == 'parcels':
+        query = """ "NUMBER" = 'x' """ # has to be a string in the shapefile
+        srows = arcpy.SearchCursor(TOCLayer, query)
+        for srow in srows: # for each row in cursor
+            x = int(x)
+            x = x + 1
+            z = str(x)
+            if IDvar != srow.PROP_ADDR:
+                IDvar = srow.PROP_ADDR
+            if Labelvar != srow.PRINT_KEY:
+                Labelvar = srow.PRINT_KEY
+            #if Panelvar != srow.Panel:
+             #   Panelvar = srow.Panel
+            query2 = """ "NUMBER2" = """ + str(z)
+            arcpy.SelectLayerByAttribute_management(TOCLayer, "NEW_SELECTION", query2) ### number has to be an int in the shapefil
+            dataframe.panToExtent(TOCLayer.getSelectedExtent())
+            exportvar = datapath + "export" + str(z) + ".shp" #var
+
+            
+            print str(IDvar)
+            for tElement in tElements:
+                if tElement.name == "pro":
+                    tElement.text = "Property ID: " + str(IDvar)
+                    if tElement.elementWidth > 1.35: # element width in map units
+                        tElement.elementWidth = 1.35
+                    
+                if tElement.name == "pro2":
+                    tElement.text = "Property " + str(IDvar)
+                    if tElement.elementWidth > 1.12:
+                        tElement.elementWidth = 1.12
+                        
+                if tElement.name == "pro3":
+                    tElement.text = "Tax ID:" + str(Labelvar)
+                    
+                '''if tElement.name == "pro4":
+                    if Panelvar == "1":
+                        tElement.text = "Community Panel: 36025C0242D"
+                    else:
+                        tElement.text = "Community Panel: 36025C0234D"'''
+                    
+            maptitlestring = "flood_" #rename map output here
+            printstring = str(datapath + maptitlestring + str(IDvar) + ".mxd")
+            printstring = printstring.replace(" ", '_')
+            
+
+
+            
+            
+            
+            print printstring
+            print repr(printstring)
+                    
+            if arcpy.Exists(printstring):
+                arcpy.Delete_management(printstring)
+                
+            mxd.saveACopy(printstring)
+            arcpy.mapping.ExportToPDF(mxd, printstring)
+            print 'Saved' + printstring
+            
+
+            
+print "done!"
+
+                    
+                
+
