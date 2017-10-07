@@ -1,0 +1,245 @@
+
+########################################********************##################
+### script uses the computers >>>>>>>>>>> default printer <<<<<<<<<<<<<!!!!!##
+########################################^^^^^^^^^^^^^^^^^^^^##################
+### set default printer in "start" "devices and printers"
+
+import arcpy, sys, traceback, datetime, os
+from arcpy.mapping import *
+# cant have anything selected in arcmap or scrpit screws up
+# recode to deselect cursor 
+
+### set up variables
+
+##############################
+inputmxd = 'Test_pdf.mxd' 
+##############################
+# set to the mxd you want to reproduce
+# just the name in the folder not the full folder name
+
+
+###################################################################
+datapath = 'I:\\Project\\FloodBuyout2012\\PhaseIV\\Test\\'  
+###################################################################
+#1 folder containing MXD... won't work otherwise
+#2 python needs escape characters
+
+###################################################################
+map_title_string = "flood_"
+###################################################################
+# title of map
+
+###################################################################
+shapefile_to_iterate_over = 'parcels' 
+###################################################################
+# string of the name of the shapefile as it is spelled in the map document you're using
+
+###################################################################
+element_1 = "pro" 
+###################################################################
+# an element is a label in arcmap
+# can set element name in arcmap, properties and then size and positon it's a field
+###################################################################
+element_1_text = "Property ID: "
+###################################################################
+# currently set up with #!!<<<<IDvar>>>>>>
+# elements text is above string plus whatever IDvar finds
+
+
+###################################################################
+element_2 = "pro2" 
+###################################################################
+# an element is a label in arcmap
+###################################################################
+element_2_text = "Property "
+###################################################################
+# currently set up with #!!<<<<IDvar>>>>>>
+# elements text is above string plus whatever IDvar finds
+
+
+###################################################################
+element_3 = "pro3" 
+###################################################################
+# an element is a label in arcmap
+###################################################################
+element_3_text = "Tax ID:"
+###################################################################
+# currently set up with #!!<<<<IDvar>>>>>>
+# elements text is above string plus whatever Labelvar finds
+
+iterations = int(0)
+# counts iterations
+
+arcpy.env.workspace = datapath
+
+mxd = MapDocument(datapath + inputmxd)
+#1 python needs escape characters
+##2 could add code to check for invalid mxd
+
+
+xwidth = 12
+## i don't know what this does right now
+
+TOCLayers = ListLayers(mxd)
+dataframe = ListDataFrames(mxd, "Layers") [0]
+tElements = ListLayoutElements(mxd, "TEXT_ELEMENT")
+
+counter = 1
+## dont know what this counts
+
+IDvar = ''
+Labelvar = ''
+panelvar = ''
+
+printon = 'False'
+
+printon = raw_input('Do you want print map on type True #### caution #### ')
+
+if not printon == 'True':
+    printon = 'False'
+
+if printon == 'True':
+    printon = raw_input('are you sure you want print map on? type True #### caution #### ')
+    if not printon == 'True':
+        printon = 'False'
+
+for TOCLayer in TOCLayers:
+    if TOCLayer.longName == shapefile_to_iterate_over:
+    # this is what gets used in arcmap to iterate over
+    # want to iterate over another shapefile change that name
+    #/////// edit this in a second ///////////
+        query = """ "NUMBER" = 'x' """
+        ### edit later
+        ### edit later
+        ### edit later
+    # has to be a string type in the shapefile
+        srows = arcpy.SearchCursor(TOCLayer, query)
+        for srow in srows:
+            # for each row in cursor
+            iterations = int(iterations)
+            iterations = iterations + 1
+            str_of_iterations = str(iterations)
+            # number of iterations of the query search
+            if IDvar != srow.PROP_ADDR: ### element 1 text
+                IDvar = srow.PROP_ADDR
+                # collects property addresss set to something else for specific map
+            if Labelvar != srow.PRINT_KEY:
+                Labelvar = srow.PRINT_KEY
+                # collects print_key
+                #if Panelvar != srow.Panel:
+                 # Panelvar = srow.Panel
+            query2 = """ "NUMBER2" = """ + str_of_iterations
+            # has to be an int type in the shapefile
+            arcpy.SelectLayerByAttribute_management(TOCLayer, "NEW_SELECTION", query2)
+            # selects the extent by query2
+            dataframe.panToExtent(TOCLayer.getSelectedExtent())
+            exportvar = datapath + "export" + str_of_iterations + ".shp"
+            print str(IDvar)
+            for tElement in tElements:
+                if tElement.name == element_1:
+                # searching for a specfic named element in map
+                    tElement.text = element_1_text + str(IDvar)
+                    # changes the text of element named pro to above
+                    if tElement.elementWidth > 1.35:
+                        # element width in map units
+                        tElement.elementWidth = 1.35
+                        # not sure how useful this code is
+
+                if tElement.name == element_2:
+                # searching for a specfic named element in map
+                    tElement.text = element_2_text + str(IDvar)
+                    # changes the text of element named pro2
+                    if tElement.elementWidth > 1.12:
+                        # element width in map units
+                        tElement.elementWidth = 1.12
+                        # not sure how useful this code is
+
+                if tElement.name == element_3:
+                # searching for a specific named element in map    
+                    tElement.text = element_3_text + str(Labelvar)
+
+                                        
+                '''if tElement.name == "pro4":
+                    if Panelvar == "1":
+                        tElement.text = "Community Panel: 36025C0242D"
+                    else:
+                        tElement.text = "Community Panel: 36025C0234D"'''
+
+            
+            print_string = str(datapath + map_title_string + str(IDvar) + ".mxd")
+            ### name based off of IDVar
+            
+            PDF_string = str(datapath + map_title_string + str(IDvar) + ".pdf")
+            
+            print_string = print_string.replace(" ", '_')
+            PDF_string = PDF_string.replace(" ", '_')
+
+            print print_string
+            print repr(print_string)
+
+            if arcpy.Exists(print_string):
+                arcpy.Delete_management(print_string)
+            # deletes mxd before saving
+
+            mxd.saveACopy(print_string)
+            arcpy.mapping.ExportToPDF(mxd, print_string)
+            print 'Saved' + print_string
+            # exports PDF of map
+
+            if printon == 'True':
+                print 'lets motherfucking print baby'
+
+                print (print_string)
+                print (PDF_string)
+                
+                import _winreg as winreg # no issues must be part of default
+                import time, arcpy, os, subprocess 
+
+                # This is where you would specify the path to your pdf
+                pdf = PDF_string # not creating mxd or pdf
+
+                # Dynamically get path to AcroRD32.exe
+                AcroRD32Path = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT, 'Software\\Adobe\\Acrobat\EXE')
+
+                acroread = AcroRD32Path
+
+                # print('variable acroread is : {0}'.form(acroread))
+
+                # The last set of double quotes leaves thes the printer blank, basically defaulting to the default printer for the system.
+
+                cmd= '{0} /N /T "{1}" ""'.format(acroread, pdf)
+
+                # See what the command line will look like before execution
+
+                print(cmd)
+
+                # Open command line in a different process other than ArcMap
+                proc = subprocess.Popen(cmd)
+
+                # 2 lines below would not close adobe reader and locked ArcMap
+                #stdout,stderr=proc.communicate()
+                #exit_code+proc.wait()
+
+                # Needed to put a sleep in here so the command line had time to open the pdf and spool
+                time.sleep(5)
+
+                # Kill AcroRD32.exe from Task Manager
+                os.system("TASKKILL /F /IM AcroRD32.exe")
+
+                
+
+                
+
+            
+
+            
+
+                    
+                        
+        
+            
+        
+    
+
+
+
