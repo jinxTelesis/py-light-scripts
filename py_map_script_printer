@@ -78,14 +78,14 @@ mxd = MapDocument(datapath + inputmxd)
 
 
 xwidth = 12
-## i don't know what this does right now
+
 
 TOCLayers = ListLayers(mxd)
 dataframe = ListDataFrames(mxd, "Layers") [0]
 tElements = ListLayoutElements(mxd, "TEXT_ELEMENT")
 
 counter = 1
-## dont know what this counts
+
 
 IDvar = ''
 Labelvar = ''
@@ -143,7 +143,7 @@ for TOCLayer in TOCLayers:
                     if tElement.elementWidth > 1.35:
                         # element width in map units
                         tElement.elementWidth = 1.35
-                        # not sure how useful this code is
+                        
 
                 if tElement.name == element_2:
                 # searching for a specfic named element in map
